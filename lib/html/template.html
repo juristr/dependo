@@ -45,6 +45,16 @@
             }
         };
 
+        var linkFilterFunction = function(link) {
+            // console.log(link);
+            // return true;
+            if (filterText && filterText !== '' && (getGraphData().nodes[link.source].id.indexOf(filterText) > -1 || getGraphData().nodes[link.target].id.indexOf(filterText) > -1)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
         <%= js %>
       })();
     </script>
