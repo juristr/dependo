@@ -9,14 +9,16 @@ var converse = require('../lib/converse');
 var fs = require('fs');
 var path = require('path');
 
-Commander
-    .version(Version)
-    .usage('[options] <file|dir ...>')
-    .option('-f, --format <name>', 'format to parse (amd/cjs/es6/json)', 'amd')
-    .option('-x, --exclude <regex>', 'a regular expression for excluding modules')
-    .option('-t, --title <title>', 'the title of the generated document (dependo)')
-    .option('-v, --reverse', 'reverse direction of arrows', false)
-    .parse(process.argv);
+Commander.version(Version)
+  .usage('[options] <file|dir ...>')
+  .option('-f, --format <name>', 'format to parse (amd/cjs/es6/json)', 'es6')
+  .option('-x, --exclude <regex>', 'a regular expression for excluding modules')
+  .option(
+    '-t, --title <title>',
+    'the title of the generated document (dependo)'
+  )
+  .option('-v, --reverse', 'reverse direction of arrows', false)
+  .parse(process.argv);
 
 if (!Commander.args.length) {
   console.log(Commander.helpInformation());
@@ -25,19 +27,18 @@ if (!Commander.args.length) {
 
 var src = Commander.args[0];
 
-var directDeps = Commander.format==='json' &&
+var directDeps =
+  Commander.format === 'json' &&
   fs.existsSync(src) &&
   JSON.parse(fs.readFileSync(src));
 
 var dependo = new Dependo(src, {
-    basePath: path.resolve(src).replace(/\\/g, '/') + '/',
-    format: Commander.format,
-    exclude: Commander.exclude,
-    directDeps: directDeps,
-    title: Commander.title,
-    transform: Commander.reverse ? converse : undefined
+  basePath: path.resolve(src).replace(/\\/g, '/') + '/',
+  format: Commander.format,
+  exclude: Commander.exclude,
+  directDeps: directDeps,
+  title: Commander.title,
+  transform: Commander.reverse ? converse : undefined
 });
 
-var html = dependo.generateHtml();
-
-process.stdout.write(html);
+dependo.generateHtml();
