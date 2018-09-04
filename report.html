@@ -1,0 +1,624 @@
+<html>
+
+<head>
+  <title>dependo</title>
+  <style>
+    body {
+      background: #fff;
+      padding: 0;
+      margin: 0;
+      font-family: helvetica, arial;
+      overflow: hidden;
+    }
+    
+    .graph {
+      width: 100%;
+      height: 100%;
+      fill: #000;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    svg {
+      height: 100%;
+      width: 100%;
+    }
+    
+    g.dimmed {
+      stroke-opacity: 0.05;
+    }
+    
+    g.dimmed text.shadow {
+      stroke-opacity: 0;
+    }
+    
+    circle {
+      fill: #ccc;
+      stroke: #333;
+      stroke-width: 1.5px;
+    }
+    
+    text {
+      font: 10px sans-serif;
+      pointer-events: none;
+    }
+    
+    text.shadow {
+      stroke: #fff;
+      stroke-width: 3px;
+      stroke-opacity: .8;
+    }
+    
+    path.link {
+      fill: none;
+      stroke: #666;
+      stroke-width: 1.5px;
+    }
+    
+    path.link.licensing {
+      stroke: green;
+    }
+    
+    path.link.resolved {
+      stroke-dasharray: 0, 2 1;
+    }
+    
+    .control-zoom {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 5px;
+      border-radius: 7px;
+      z-index: 100;
+    }
+    
+    .control-zoom a {
+      background: rgba(255, 255, 255, 0.75);
+      background-position: 50% 50%;
+      background-repeat: no-repeat;
+      display: block;
+      width: 19px;
+      height: 19px;
+      border-radius: 4px;
+    }
+    
+    .control-zoom a:last-child {
+      margin: 0;
+    }
+    
+    .control-zoom a:hover {
+      background-color: white;
+    }
+    
+    .control-zoom > .control-zoom-in {
+      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyBpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBXaW5kb3dzIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkUwRTZCRkI3NjQzNzExRTBBQUI3RTAwMUU2MTZDRkQ5IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkUwRTZCRkI4NjQzNzExRTBBQUI3RTAwMUU2MTZDRkQ5Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6RTBFNkJGQjU2NDM3MTFFMEFBQjdFMDAxRTYxNkNGRDkiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6RTBFNkJGQjY2NDM3MTFFMEFBQjdFMDAxRTYxNkNGRDkiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7cwPMXAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP/AOW3MEoAAAARSURBVAhbY3jcwABBcAATAQBxlwhT4XiahwAAAABJRU5ErkJggg==);
+      margin-bottom: 5px;
+    }
+    
+    .control-zoom > .control-zoom-out {
+      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJAQMAAADaX5RTAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyBpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBXaW5kb3dzIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkU5MjRDMEQ5NjQzNzExRTBCM0JDQkU2MzVGQTBCNjRDIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkU5MjRDMERBNjQzNzExRTBCM0JDQkU2MzVGQTBCNjRDIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6RTkyNEMwRDc2NDM3MTFFMEIzQkNCRTYzNUZBMEI2NEMiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6RTkyNEMwRDg2NDM3MTFFMEIzQkNCRTYzNUZBMEI2NEMiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7uh53jAAAABlBMVEUAAAD///+l2Z/dAAAAAnRSTlP/AOW3MEoAAAARSURBVAhbY/jfwABBcAATAQB6xwj7vHGbwAAAAABJRU5ErkJggg==);
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div style="margin-bottom:15px;">
+    <input type="text" id="filter">
+  </div>
+
+  <div class="graph">
+    <div class="control-zoom">
+      <a class="control-zoom-in" href="#" title="Zoom in"></a>
+      <a class="control-zoom-out" href="#" title="Zoom out"></a>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+
+  <script>
+      var getGraphData = function() { return {"directed":true,"multigraph":false,"graph":[],"nodes":[{"id":"app"},{"id":"app.directive"},{"id":"authentication/module"},{"id":"common/ajaxprogress/module"},{"id":"conversion/module"},{"id":"core/module"},{"id":"data-export/module"},{"id":"diagnostics/module"},{"id":"documents/module"},{"id":"editing/module"},{"id":"footer/module"},{"id":"help/module"},{"id":"identify-results/module"},{"id":"identify/module"},{"id":"layergroups/module"},{"id":"layertree/module"},{"id":"loader/module"},{"id":"measure/module"},{"id":"ng1-egov-authentication"},{"id":"notification/module"},{"id":"omnibox/module"},{"id":"permalink/module"},{"id":"popup/module"},{"id":"print/module"},{"id":"selection/module"},{"id":"settings/module"},{"id":"shell/module"},{"id":"spatial-query-manager/module"},{"id":"authentication/mapscRestrict.directive"},{"id":"Egov"},{"id":"authentication/security.interceptor"},{"id":"authentication/security.service"},{"id":"authentication/securityRetryQueue.service"},{"id":"authentication/user.service"},{"id":"confirm-modal/module"},{"id":"authentication/routeSecurity.service"},{"id":"jquery"},{"id":"basemaps/baseMapSelector.directive"},{"id":"basemaps/baseMapSidebarWidget.component"},{"id":"basemaps/translations.config"},{"id":"common/directives/module"},{"id":"common/directives/ngEnter.directive"},{"id":"common/directives/ngIgnoreDirty.directive"},{"id":"common/modals/modalPopup.service"},{"id":"common/modals/module"},{"id":"common/modals/translations.config"},{"id":"common/userwidget/module"},{"id":"common/userwidget/userwidget.directive"},{"id":"moment"},{"id":"confirm-modal/confirmModal.service"},{"id":"conversion/conversion.filter"},{"id":"conversion/conversion.service"},{"id":"big"},{"id":"core/app.constants"},{"id":"core/dynamicEndpoint.service"},{"id":"core/geometryHelper.service"},{"id":"jsts"},{"id":"core/reducer"},{"id":"core/translation.config"},{"id":"ngrx-store/dispatcher"},{"id":"ngrx-store/store"},{"id":"data-export/dataExport.component"},{"id":"data-export/dataExport.constants"},{"id":"data-export/dataExport.service"},{"id":"data-export/dataExportOpener.directive"},{"id":"data-export/translations.config"},{"id":"delete-confirmation/confirmationDelete.service"},{"id":"delete-confirmation/module"},{"id":"delete-confirmation/translations.config"},{"id":"diagnostics/layersDebug.directive"},{"id":"documents/cardflow.directive"},{"id":"documents/documents.constants"},{"id":"documents/translations.config"},{"id":"identify-results/results.constants"},{"id":"editing/attributesSelector.service"},{"id":"editing/circularMenu.directive"},{"id":"editing/commands/command.factory"},{"id":"editing/coordsEditor.directive"},{"id":"editing/coordsEditor.service"},{"id":"editing/coordsEditorOpener.directive"},{"id":"editing/coordsPopup.directive"},{"id":"editing/coordsPopup.service"},{"id":"editing/documentsOpener.directive"},{"id":"editing/drawer.service"},{"id":"lodash"},{"id":"map/treeUtils"},{"id":"editing/drawerFeatureManager.service"},{"id":"editing/drawerstyles.service"},{"id":"editing/editTools/cloneTool.factory"},{"id":"editing/editTools/deleteHoleTool.factory"},{"id":"editing/editTools/deleteTool.factory"},{"id":"editing/editTools/differenceTool.factory"},{"id":"editing/editTools/holeTool.factory"},{"id":"editing/editTools/intersectTool.factory"},{"id":"editing/editTools/moveTool.factory"},{"id":"editing/editTools/rotateTool.factory"},{"id":"mathjs"},{"id":"editing/editTools/splitTool.factory"},{"id":"editing/editTools/unionTool.factory"},{"id":"editing/editing.component"},{"id":"editing/editing.constants"},{"id":"editing/editingSidebarWidget.component"},{"id":"editing/editingjstsHelper.factory"},{"id":"editing/formly.config"},{"id":"editing/messageBox.service"},{"id":"editing/templateModel.service"},{"id":"editing/templatetree.directive"},{"id":"editing/translations.config"},{"id":"editing/undoredo.service"},{"id":"footer/footer.constants"},{"id":"footer/footer.directive"},{"id":"help/help.directive"},{"id":"help/helpModel.service"},{"id":"identify-results/results.directive"},{"id":"identify-results/results.service"},{"id":"identify-results/resultsView.service"},{"id":"identify-results/translations.config"},{"id":"identify/identify.component"},{"id":"identify/identify.constants"},{"id":"identify/identify.service"},{"id":"identify/shortInfo.directive"},{"id":"identify/shortInfoTooltip.directive"},{"id":"identify/translations.config"},{"id":"layergroups/constants"},{"id":"layergroups/fallbackSrc.directive"},{"id":"layergroups/layerGroups.directive"},{"id":"layertree/constants"},{"id":"layertree/layertree.directive"},{"id":"layertree/layertreeSidebarWidget.component"},{"id":"layertree/opacity.directive"},{"id":"layertree/opacityHint.directive"},{"id":"layertree/translations.config"},{"id":"layertree/transparency.directive"},{"id":"loader/lazy.provider"},{"id":"loader/lazyLoader.directive"},{"id":"loader/lazyLoader.service"},{"id":"oclazyload"},{"id":"require-css"},{"id":"main"},{"id":"bootstrap-js"},{"id":"map/almond"},{"id":"map/constants"},{"id":"map/contextSelection.service"},{"id":"map/drawTools.directive"},{"id":"map/extentPreview.directive"},{"id":"map/layerLegend.directive"},{"id":"map/layerListUtils"},{"id":"map/layerManager.service"},{"id":"map/layerModel.service"},{"id":"map/layerTreeConverter.service"},{"id":"map/main"},{"id":"map/map"},{"id":"map/map.directive"},{"id":"proj4"},{"id":"utils/cors"},{"id":"map/map.service"},{"id":"rxjs/Subject"},{"id":"map/mapContextModel.service"},{"id":"map/mapDrawer.service"},{"id":"map/mapScalePopover.directive"},{"id":"map/mapsProjections.service"},{"id":"map/mapswidget.app"},{"id":"popup/module-mock"},{"id":"settings/module-mock"},{"id":"templates"},{"id":"map/openlayerStyles.service"},{"id":"map/scale.filter"},{"id":"map/scaleFormat.directive"},{"id":"map/scaleSelection.directive"},{"id":"map/stylesConstruction.service"},{"id":"map/translations.config"},{"id":"map/userContext.interceptor"},{"id":"map/zoom.service"},{"id":"measure/measure.component"},{"id":"measure/measureContext.service"},{"id":"measure/measureLayers.service"},{"id":"measure/measureMathHelper.service"},{"id":"measure/measureSidebarWidget.component"},{"id":"measure/translations.config"},{"id":"namespace"},{"id":"rxjs/BehaviorSubject"},{"id":"rxjs/add/operator/scan"},{"id":"rxjs/operator/distinctUntilChanged"},{"id":"rxjs/operator/map"},{"id":"rxjs/operator/pluck"},{"id":"notification/notification.service"},{"id":"omnibox/fifoArray"},{"id":"omnibox/infiniteScroll.directive"},{"id":"omnibox/omnibox.directive"},{"id":"omnibox/resultsNavigation.service"},{"id":"omnibox/search.service"},{"id":"omnibox/searchModel.service"},{"id":"omnibox/translations.config"},{"id":"permalink/browserhistory.service"},{"id":"permalink/permalink.service"},{"id":"popup/popup.constants"},{"id":"popup/popup.directive"},{"id":"popup/popupDroppableZone.directive"},{"id":"popup/popupOpener.directive"},{"id":"print/geometryHelper.service"},{"id":"print/print.component"},{"id":"print/print.constants"},{"id":"print/printContext.service"},{"id":"print/printSidebarWidget.component"},{"id":"print/translations.config"},{"id":"routes"},{"id":"selection/bufferInput.directive"},{"id":"selection/import.translations.config"},{"id":"selection/importCrsSelection.directive"},{"id":"selection/importFeatures.service"},{"id":"selection/selectedFeatures.service"},{"id":"selection/selection.component"},{"id":"selection/selection.constants"},{"id":"selection/selectionContext.factory"},{"id":"selection/selectionSidebarWidget.component"},{"id":"selection/translations.config"},{"id":"settings/localUserSettings.service"},{"id":"settings/settingkeys.constants"},{"id":"settings/userSettings.service"},{"id":"shell/appNavigation.directive"},{"id":"shell/sidebar.component"},{"id":"shell/sidebarWidget.directive"},{"id":"shell/toolboxNavigationSidebarWidget.component"},{"id":"shell/toolboxSidebarWidget.component"},{"id":"shell/translations.config"},{"id":"spatial-query-manager/spatialQueryManager.service"},{"id":"spatial-query-manager/spatialQueryModel.service"},{"id":"spatial-query-manager/spatialRequestModel.service"},{"id":"spatial-query-manager/sqmConstants.constants"},{"id":"spatial-query-manager/translations.config"}],"links":[{"sourceName":"app","targetName":"app.directive"},{"sourceName":"app","targetName":"authentication/module"},{"sourceName":"app","targetName":"common/ajaxprogress/module"},{"sourceName":"app","targetName":"conversion/module"},{"sourceName":"app","targetName":"core/module"},{"sourceName":"app","targetName":"data-export/module"},{"sourceName":"app","targetName":"diagnostics/module"},{"sourceName":"app","targetName":"documents/module"},{"sourceName":"app","targetName":"editing/module"},{"sourceName":"app","targetName":"footer/module"},{"sourceName":"app","targetName":"help/module"},{"sourceName":"app","targetName":"identify-results/module"},{"sourceName":"app","targetName":"identify/module"},{"sourceName":"app","targetName":"layergroups/module"},{"sourceName":"app","targetName":"layertree/module"},{"sourceName":"app","targetName":"loader/module"},{"sourceName":"app","targetName":"measure/module"},{"sourceName":"app","targetName":"ng1-egov-authentication"},{"sourceName":"app","targetName":"notification/module"},{"sourceName":"app","targetName":"omnibox/module"},{"sourceName":"app","targetName":"permalink/module"},{"sourceName":"app","targetName":"popup/module"},{"sourceName":"app","targetName":"print/module"},{"sourceName":"app","targetName":"selection/module"},{"sourceName":"app","targetName":"settings/module"},{"sourceName":"app","targetName":"shell/module"},{"sourceName":"app","targetName":"spatial-query-manager/module"},{"sourceName":"authentication/module","targetName":"Egov"},{"sourceName":"authentication/module","targetName":"authentication/mapscRestrict.directive"},{"sourceName":"authentication/module","targetName":"authentication/security.interceptor"},{"sourceName":"authentication/module","targetName":"authentication/security.service"},{"sourceName":"authentication/module","targetName":"authentication/securityRetryQueue.service"},{"sourceName":"authentication/module","targetName":"authentication/user.service"},{"sourceName":"authentication/module","targetName":"confirm-modal/module"},{"sourceName":"authentication/security.interceptor","targetName":"jquery"},{"sourceName":"authentication/user.service","targetName":"Egov"},{"sourceName":"common/directives/module","targetName":"common/directives/ngEnter.directive"},{"sourceName":"common/directives/module","targetName":"common/directives/ngIgnoreDirty.directive"},{"sourceName":"common/modals/module","targetName":"common/modals/modalPopup.service"},{"sourceName":"common/modals/module","targetName":"common/modals/translations.config"},{"sourceName":"common/userwidget/module","targetName":"common/userwidget/userwidget.directive"},{"sourceName":"common/userwidget/userwidget.directive","targetName":"jquery"},{"sourceName":"common/userwidget/userwidget.directive","targetName":"moment"},{"sourceName":"confirm-modal/module","targetName":"confirm-modal/confirmModal.service"},{"sourceName":"conversion/conversion.service","targetName":"big"},{"sourceName":"conversion/module","targetName":"conversion/conversion.filter"},{"sourceName":"conversion/module","targetName":"conversion/conversion.service"},{"sourceName":"core/geometryHelper.service","targetName":"jsts"},{"sourceName":"core/module","targetName":"common/directives/module"},{"sourceName":"core/module","targetName":"core/app.constants"},{"sourceName":"core/module","targetName":"core/dynamicEndpoint.service"},{"sourceName":"core/module","targetName":"core/geometryHelper.service"},{"sourceName":"core/module","targetName":"core/reducer"},{"sourceName":"core/module","targetName":"core/translation.config"},{"sourceName":"core/module","targetName":"ngrx-store/dispatcher"},{"sourceName":"core/module","targetName":"ngrx-store/store"},{"sourceName":"data-export/module","targetName":"data-export/dataExport.component"},{"sourceName":"data-export/module","targetName":"data-export/dataExport.constants"},{"sourceName":"data-export/module","targetName":"data-export/dataExport.service"},{"sourceName":"data-export/module","targetName":"data-export/dataExportOpener.directive"},{"sourceName":"data-export/module","targetName":"data-export/translations.config"},{"sourceName":"delete-confirmation/module","targetName":"delete-confirmation/confirmationDelete.service"},{"sourceName":"delete-confirmation/module","targetName":"delete-confirmation/translations.config"},{"sourceName":"diagnostics/module","targetName":"diagnostics/layersDebug.directive"},{"sourceName":"documents/module","targetName":"documents/cardflow.directive"},{"sourceName":"documents/module","targetName":"documents/documents.constants"},{"sourceName":"documents/module","targetName":"documents/translations.config"},{"sourceName":"documents/module","targetName":"footer/module"},{"sourceName":"documents/module","targetName":"identify-results/results.constants"},{"sourceName":"editing/drawer.service","targetName":"lodash"},{"sourceName":"editing/drawer.service","targetName":"map/treeUtils"},{"sourceName":"editing/drawerFeatureManager.service","targetName":"lodash"},{"sourceName":"editing/editTools/rotateTool.factory","targetName":"lodash"},{"sourceName":"editing/editTools/rotateTool.factory","targetName":"mathjs"},{"sourceName":"editing/editing.component","targetName":"lodash"},{"sourceName":"editing/editingjstsHelper.factory","targetName":"jsts"},{"sourceName":"editing/module","targetName":"core/module"},{"sourceName":"editing/module","targetName":"editing/attributesSelector.service"},{"sourceName":"editing/module","targetName":"editing/circularMenu.directive"},{"sourceName":"editing/module","targetName":"editing/commands/command.factory"},{"sourceName":"editing/module","targetName":"editing/coordsEditor.directive"},{"sourceName":"editing/module","targetName":"editing/coordsEditor.service"},{"sourceName":"editing/module","targetName":"editing/coordsEditorOpener.directive"},{"sourceName":"editing/module","targetName":"editing/coordsPopup.directive"},{"sourceName":"editing/module","targetName":"editing/coordsPopup.service"},{"sourceName":"editing/module","targetName":"editing/documentsOpener.directive"},{"sourceName":"editing/module","targetName":"editing/drawer.service"},{"sourceName":"editing/module","targetName":"editing/drawerFeatureManager.service"},{"sourceName":"editing/module","targetName":"editing/drawerstyles.service"},{"sourceName":"editing/module","targetName":"editing/editTools/cloneTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/deleteHoleTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/deleteTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/differenceTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/holeTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/intersectTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/moveTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/rotateTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/splitTool.factory"},{"sourceName":"editing/module","targetName":"editing/editTools/unionTool.factory"},{"sourceName":"editing/module","targetName":"editing/editing.component"},{"sourceName":"editing/module","targetName":"editing/editing.constants"},{"sourceName":"editing/module","targetName":"editing/editingSidebarWidget.component"},{"sourceName":"editing/module","targetName":"editing/editingjstsHelper.factory"},{"sourceName":"editing/module","targetName":"editing/formly.config"},{"sourceName":"editing/module","targetName":"editing/messageBox.service"},{"sourceName":"editing/module","targetName":"editing/templateModel.service"},{"sourceName":"editing/module","targetName":"editing/templatetree.directive"},{"sourceName":"editing/module","targetName":"editing/translations.config"},{"sourceName":"editing/module","targetName":"editing/undoredo.service"},{"sourceName":"editing/templatetree.directive","targetName":"lodash"},{"sourceName":"footer/module","targetName":"footer/footer.constants"},{"sourceName":"footer/module","targetName":"footer/footer.directive"},{"sourceName":"help/module","targetName":"help/help.directive"},{"sourceName":"help/module","targetName":"help/helpModel.service"},{"sourceName":"identify-results/module","targetName":"data-export/module"},{"sourceName":"identify-results/module","targetName":"documents/documents.constants"},{"sourceName":"identify-results/module","targetName":"footer/module"},{"sourceName":"identify-results/module","targetName":"identify-results/results.constants"},{"sourceName":"identify-results/module","targetName":"identify-results/results.directive"},{"sourceName":"identify-results/module","targetName":"identify-results/results.service"},{"sourceName":"identify-results/module","targetName":"identify-results/resultsView.service"},{"sourceName":"identify-results/module","targetName":"identify-results/translations.config"},{"sourceName":"identify/identify.component","targetName":"lodash"},{"sourceName":"identify/identify.service","targetName":"map/treeUtils"},{"sourceName":"identify/module","targetName":"core/module"},{"sourceName":"identify/module","targetName":"documents/documents.constants"},{"sourceName":"identify/module","targetName":"identify/identify.component"},{"sourceName":"identify/module","targetName":"identify/identify.constants"},{"sourceName":"identify/module","targetName":"identify/identify.service"},{"sourceName":"identify/module","targetName":"identify/shortInfo.directive"},{"sourceName":"identify/module","targetName":"identify/shortInfoTooltip.directive"},{"sourceName":"identify/module","targetName":"identify/translations.config"},{"sourceName":"identify/shortInfoTooltip.directive","targetName":"lodash"},{"sourceName":"layergroups/module","targetName":"layergroups/constants"},{"sourceName":"layergroups/module","targetName":"layergroups/fallbackSrc.directive"},{"sourceName":"layergroups/module","targetName":"layergroups/layerGroups.directive"},{"sourceName":"layertree/layertree.directive","targetName":"lodash"},{"sourceName":"layertree/module","targetName":"core/module"},{"sourceName":"layertree/module","targetName":"layertree/constants"},{"sourceName":"layertree/module","targetName":"layertree/layertree.directive"},{"sourceName":"layertree/module","targetName":"layertree/layertreeSidebarWidget.component"},{"sourceName":"layertree/module","targetName":"layertree/opacity.directive"},{"sourceName":"layertree/module","targetName":"layertree/opacityHint.directive"},{"sourceName":"layertree/module","targetName":"layertree/translations.config"},{"sourceName":"layertree/module","targetName":"layertree/transparency.directive"},{"sourceName":"layertree/module","targetName":"settings/module"},{"sourceName":"loader/module","targetName":"authentication/module"},{"sourceName":"loader/module","targetName":"core/module"},{"sourceName":"loader/module","targetName":"loader/lazy.provider"},{"sourceName":"loader/module","targetName":"loader/lazyLoader.directive"},{"sourceName":"loader/module","targetName":"loader/lazyLoader.service"},{"sourceName":"loader/module","targetName":"oclazyload"},{"sourceName":"loader/module","targetName":"require-css"},{"sourceName":"main","targetName":"app"},{"sourceName":"main","targetName":"bootstrap-js"},{"sourceName":"main","targetName":"jquery"},{"sourceName":"map/layerManager.service","targetName":"jquery"},{"sourceName":"map/layerManager.service","targetName":"lodash"},{"sourceName":"map/layerManager.service","targetName":"map/layerListUtils"},{"sourceName":"map/layerManager.service","targetName":"map/treeUtils"},{"sourceName":"map/layerTreeConverter.service","targetName":"lodash"},{"sourceName":"map/layerTreeConverter.service","targetName":"map/treeUtils"},{"sourceName":"map/map.directive","targetName":"jquery"},{"sourceName":"map/map.directive","targetName":"proj4"},{"sourceName":"map/map.directive","targetName":"utils/cors"},{"sourceName":"map/map.service","targetName":"map/treeUtils"},{"sourceName":"map/map.service","targetName":"rxjs/Subject"},{"sourceName":"map/mapswidget.app","targetName":"conversion/module"},{"sourceName":"map/mapswidget.app","targetName":"core/module"},{"sourceName":"map/mapswidget.app","targetName":"footer/module"},{"sourceName":"map/mapswidget.app","targetName":"identify/module"},{"sourceName":"map/mapswidget.app","targetName":"layergroups/module"},{"sourceName":"map/mapswidget.app","targetName":"layertree/module"},{"sourceName":"map/mapswidget.app","targetName":"measure/module"},{"sourceName":"map/mapswidget.app","targetName":"omnibox/module"},{"sourceName":"map/mapswidget.app","targetName":"popup/module-mock"},{"sourceName":"map/mapswidget.app","targetName":"selection/module"},{"sourceName":"map/mapswidget.app","targetName":"settings/module-mock"},{"sourceName":"map/mapswidget.app","targetName":"templates"},{"sourceName":"measure/measureMathHelper.service","targetName":"proj4"},{"sourceName":"measure/module","targetName":"core/module"},{"sourceName":"measure/module","targetName":"delete-confirmation/module"},{"sourceName":"measure/module","targetName":"measure/measure.component"},{"sourceName":"measure/module","targetName":"measure/measureContext.service"},{"sourceName":"measure/module","targetName":"measure/measureLayers.service"},{"sourceName":"measure/module","targetName":"measure/measureMathHelper.service"},{"sourceName":"measure/module","targetName":"measure/measureSidebarWidget.component"},{"sourceName":"measure/module","targetName":"measure/translations.config"},{"sourceName":"ngrx-store/dispatcher","targetName":"rxjs/Subject"},{"sourceName":"ngrx-store/store","targetName":"rxjs/BehaviorSubject"},{"sourceName":"ngrx-store/store","targetName":"rxjs/add/operator/scan"},{"sourceName":"ngrx-store/store","targetName":"rxjs/operator/distinctUntilChanged"},{"sourceName":"ngrx-store/store","targetName":"rxjs/operator/map"},{"sourceName":"ngrx-store/store","targetName":"rxjs/operator/pluck"},{"sourceName":"notification/module","targetName":"notification/notification.service"},{"sourceName":"omnibox/module","targetName":"core/module"},{"sourceName":"omnibox/module","targetName":"omnibox/infiniteScroll.directive"},{"sourceName":"omnibox/module","targetName":"omnibox/omnibox.directive"},{"sourceName":"omnibox/module","targetName":"omnibox/resultsNavigation.service"},{"sourceName":"omnibox/module","targetName":"omnibox/search.service"},{"sourceName":"omnibox/module","targetName":"omnibox/searchModel.service"},{"sourceName":"omnibox/module","targetName":"omnibox/translations.config"},{"sourceName":"omnibox/module","targetName":"settings/module"},{"sourceName":"omnibox/omnibox.directive","targetName":"jquery"},{"sourceName":"omnibox/search.service","targetName":"lodash"},{"sourceName":"omnibox/search.service","targetName":"omnibox/fifoArray"},{"sourceName":"omnibox/search.service","targetName":"rxjs/Subject"},{"sourceName":"permalink/module","targetName":"permalink/browserhistory.service"},{"sourceName":"permalink/module","targetName":"permalink/permalink.service"},{"sourceName":"permalink/permalink.service","targetName":"jquery"},{"sourceName":"popup/module","targetName":"popup/popup.constants"},{"sourceName":"popup/module","targetName":"popup/popup.directive"},{"sourceName":"popup/module","targetName":"popup/popupDroppableZone.directive"},{"sourceName":"popup/module","targetName":"popup/popupOpener.directive"},{"sourceName":"popup/module-mock","targetName":"popup/popup.constants"},{"sourceName":"print/module","targetName":"core/module"},{"sourceName":"print/module","targetName":"print/geometryHelper.service"},{"sourceName":"print/module","targetName":"print/print.component"},{"sourceName":"print/module","targetName":"print/print.constants"},{"sourceName":"print/module","targetName":"print/printContext.service"},{"sourceName":"print/module","targetName":"print/printSidebarWidget.component"},{"sourceName":"print/module","targetName":"print/translations.config"},{"sourceName":"print/print.component","targetName":"map/treeUtils"},{"sourceName":"selection/bufferInput.directive","targetName":"jquery"},{"sourceName":"selection/module","targetName":"conversion/module"},{"sourceName":"selection/module","targetName":"core/module"},{"sourceName":"selection/module","targetName":"selection/bufferInput.directive"},{"sourceName":"selection/module","targetName":"selection/import.translations.config"},{"sourceName":"selection/module","targetName":"selection/importCrsSelection.directive"},{"sourceName":"selection/module","targetName":"selection/importFeatures.service"},{"sourceName":"selection/module","targetName":"selection/selectedFeatures.service"},{"sourceName":"selection/module","targetName":"selection/selection.component"},{"sourceName":"selection/module","targetName":"selection/selection.constants"},{"sourceName":"selection/module","targetName":"selection/selectionContext.factory"},{"sourceName":"selection/module","targetName":"selection/selectionSidebarWidget.component"},{"sourceName":"selection/module","targetName":"selection/translations.config"},{"sourceName":"selection/selection.component","targetName":"lodash"},{"sourceName":"selection/selection.component","targetName":"map/treeUtils"},{"sourceName":"settings/module","targetName":"core/module"},{"sourceName":"settings/module","targetName":"settings/localUserSettings.service"},{"sourceName":"settings/module","targetName":"settings/settingkeys.constants"},{"sourceName":"settings/module","targetName":"settings/userSettings.service"},{"sourceName":"settings/module-mock","targetName":"settings/settingkeys.constants"},{"sourceName":"shell/module","targetName":"conversion/module"},{"sourceName":"shell/module","targetName":"core/module"},{"sourceName":"shell/module","targetName":"footer/module"},{"sourceName":"shell/module","targetName":"layergroups/module"},{"sourceName":"shell/module","targetName":"layertree/module"},{"sourceName":"shell/module","targetName":"measure/module"},{"sourceName":"shell/module","targetName":"selection/module"},{"sourceName":"shell/module","targetName":"shell/appNavigation.directive"},{"sourceName":"shell/module","targetName":"shell/sidebar.component"},{"sourceName":"shell/module","targetName":"shell/sidebarWidget.directive"},{"sourceName":"shell/module","targetName":"shell/toolboxNavigationSidebarWidget.component"},{"sourceName":"shell/module","targetName":"shell/toolboxSidebarWidget.component"},{"sourceName":"shell/module","targetName":"shell/translations.config"},{"sourceName":"spatial-query-manager/module","targetName":"core/module"},{"sourceName":"spatial-query-manager/module","targetName":"notification/module"},{"sourceName":"spatial-query-manager/module","targetName":"spatial-query-manager/spatialQueryManager.service"},{"sourceName":"spatial-query-manager/module","targetName":"spatial-query-manager/spatialQueryModel.service"},{"sourceName":"spatial-query-manager/module","targetName":"spatial-query-manager/spatialRequestModel.service"},{"sourceName":"spatial-query-manager/module","targetName":"spatial-query-manager/sqmConstants.constants"},{"sourceName":"spatial-query-manager/module","targetName":"spatial-query-manager/translations.config"},{"sourceName":"utils/cors","targetName":"jquery"}]};};
+      var basePath = "/Users/juri/coding/siag/maps/app/scripts/";
+      var graphIdentification = "913b8c616951f6b8f87a6719d2dc8502abce0397";
+      var nodePositions = null; //replace with the object you find in console to persist node positions
+
+      (function() {
+
+  var url = 'data.json';
+  var r = 10;
+  var graph, layout, zoom, nodes, links, data;
+  var linkedByIndex = {};
+  var graphWidth, graphHeight;
+
+  // Helpers
+  function formatClassName(prefix, object) {
+    return prefix + '-' + object.id.replace(/(\.|\/)/gi, '-');
+  }
+
+  function findElementByNode(prefix, node) {
+    var selector = '.'+formatClassName(prefix, node);
+    return graph.select(selector);
+  }
+
+  function isConnected(a, b) {
+    return linkedByIndex[a.index + "," + b.index] || linkedByIndex[b.index + "," + a.index] || a.index == b.index;
+  }
+
+  function fadeRelatedNodes(d, opacity, nodes, links) {
+
+    // Clean
+    $('path.link').removeAttr('data-show');
+
+    nodes.style("stroke-opacity", function(o) {
+        var thisOpacity;
+
+      if (isConnected(d, o)) {
+        thisOpacity = 1;
+      } else {
+        thisOpacity = opacity;
+      }
+
+      this.setAttribute('fill-opacity', thisOpacity);
+      this.setAttribute('stroke-opacity', thisOpacity);
+
+      if(thisOpacity == 1) {
+        this.classList.remove('dimmed');
+      } else {
+        this.classList.add('dimmed');
+      }
+
+      return thisOpacity;
+    });
+
+    links.style("stroke-opacity", function(o) {
+
+      if (o.source === d) {
+
+        // Highlight target/sources of the link
+        var elmNodes = graph.selectAll('.'+formatClassName('node', o.target));
+        elmNodes.attr('fill-opacity', 1);
+        elmNodes.attr('stroke-opacity', 1);
+
+        elmNodes.classed('dimmed', false);
+
+        // Highlight arrows
+        var elmCurrentLink = $('path.link[data-source=' + o.source.index + ']');
+        elmCurrentLink.attr('data-show', true);
+        elmCurrentLink.attr('marker-end', 'url(#regular)');
+
+        return 1;
+
+      } else {
+
+        var elmAllLinks = $('path.link:not([data-show])');
+
+        if(opacity == 1) {
+          elmAllLinks.attr('marker-end', 'url(#regular)');
+        } else {
+          elmAllLinks.attr('marker-end', '');
+        }
+
+        return opacity;
+      }
+
+    });
+  }
+
+
+  function render() {
+
+    zoom = d3.behavior.zoom();
+    zoom.on("zoom", onZoomChanged);
+
+    // Setup layout
+    layout = d3.layout.force()
+      .gravity(.05)
+      .charge(-300)
+      .linkDistance(100);
+
+    // Setup graph
+    graph = d3.select(".graph")
+      .append("svg:svg")
+      .attr("pointer-events", "all")
+      .call(zoom)
+      .append('svg:g')
+        .attr('width', graphWidth)
+        .attr('height', graphHeight);
+
+    d3.select(window).on("resize", resize);
+
+    var graphData = prepareRendering();
+    renderGraph(graphData);
+    data = graphData;
+
+    // Resize
+    resize();
+
+    centerGraph();
+
+    // Controlers
+    $('.control-zoom a').on('click', onControlZoomClicked);
+  }
+
+  function resize() {
+    graphWidth = window.innerWidth;
+    graphHeight = window.innerHeight;
+    graph.attr("width", graphWidth)
+         .attr("height", graphHeight);
+
+    layout.size([graphWidth, graphHeight])
+          .resume();
+  }
+
+  function centerGraph() {
+
+    var centerTranslate = [
+      (graphWidth / 2) - (graphWidth * 0.2 / 2),
+      (graphHeight / 2) - (graphHeight * 0.2 / 2)
+    ];
+
+    zoom.translate(centerTranslate);
+
+    // Render transition
+    graph.transition()
+      .duration(500)
+      .attr("transform", "translate(" + zoom.translate() + ")" + " scale(" + zoom.scale() + ")");
+  }
+
+  function prepareRendering() {
+    // Load graph data
+    var graphData = window.getGraphData();
+
+    var excludePattern = document.getElementById('filter').value;
+
+    var removedNodeIdx = [];
+    graphData.nodes = graphData.nodes.filter((node,idx) => {
+      if(excludePattern !== '' && node.id.indexOf(excludePattern) > -1) {
+        removedNodeIdx.push({ idx: idx, name: node.id});
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    console.log('Nodes removed', removedNodeIdx);
+
+    graphData.links = graphData.links.filter((link, idx) => {
+      let idxPresent = false;
+      
+      removedNodeIdx.forEach((nodeIdx) => {
+        if(nodeIdx.idx === link.source || nodeIdx.idx === link.target) {
+          idxPresent = true;
+        }
+      });
+
+      if(idxPresent) {
+        console.log('Removing link', link);
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+    // calculate indices
+    graphData.links.map((link) => {
+      graphData.nodes.forEach((node, idx) => {
+        if(node.id === link.sourceName) {
+          link.source = idx;
+        }
+        if(node.id === link.targetName) {
+          link.target = idx;
+        }
+      });
+
+      return link;
+    });
+
+    // Load node placement
+    var storedNodes = getNodes();
+    graphData.nodes = graphData.nodes.map(function(n){
+      if(storedNodes[n.id]){
+        return storedNodes[n.id];
+      } else {
+        return n;
+      }
+    });
+
+    return graphData;
+  }
+
+  function renderGraph(data) {
+    // Markers
+    graph.append("svg:defs").selectAll("marker")
+        .data(['regular'])
+      .enter().append("svg:marker")
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", -1.5)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+      .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
+    // Lines
+    links = graph.append('svg:g').selectAll("line")
+      .data(data.links)
+      .enter().append("svg:path")
+      .attr('class', 'link')
+      .attr("data-target", function(o) { return o.target })
+      .attr("data-source", function(o) { return o.source })
+      .attr("marker-end", function(d) { return "url(#regular)"; });
+    // Nodes
+    nodes = graph.append('svg:g').selectAll("node")
+      .data(data.nodes)
+      .enter().append("svg:g")
+      .attr("class","node")
+      .call(layout.drag)
+      .on("mousedown", onNodeMouseDown);
+
+      // Circles
+      nodes.attr("class", function(d) { return formatClassName('node', d) })
+      nodes.append("svg:circle")
+        .attr("class", function(d) { return formatClassName('circle', d) })
+        .attr("r", 6)
+        .on("mouseover", onNodeMouseOver.bind(this, nodes, links) )
+        .on("mouseout", onNodeMouseOut.bind(this, nodes, links) );
+
+
+      // A copy of the text with a thick white stroke for legibility.
+      nodes.append("svg:text")
+          .attr("x", 15)
+          .attr("y", ".31em")
+          .attr("class", function(d) { return 'shadow ' + formatClassName('text', d) })
+          .text(function(d) { return d.id.replace(window.basePath, '') });
+
+      nodes.append("svg:text")
+          .attr("class", function(d) { return formatClassName('text', d) })
+          .attr("x", 15)
+          .attr("y", ".31em")
+          .text(function(d) { return d.id.replace(window.basePath, '') });
+
+    // Build linked index
+    data.links.forEach(function(d) {
+      linkedByIndex[d.source.index + "," + d.target.index] = 1;
+    });
+
+    data.links.forEach(function(link, index, list) {
+        if (typeof data.nodes[link.source] === 'undefined') {
+            console.log('undefined source', link);
+        }
+        if (typeof data.nodes[link.target] === 'undefined') {
+            console.log('undefined target', link);
+        }
+    });
+
+    // Draw the
+    layout.nodes(data.nodes);
+    layout.links(data.links);
+    layout.on("tick", onTick);
+    layout.start();
+
+    zoom.scale(0.4);
+
+    // Render transition
+    graph.transition()
+      .duration(500)
+      .attr("transform", "scale(" + zoom.scale() + ")");
+
+  }
+
+  function updateGraph(data) {
+    // Markers
+    graph.append("svg:defs").selectAll("marker")
+        .data(['regular'])
+      // .enter().append("svg:marker")
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", -1.5)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
+    // Lines
+    links = graph.append('svg:g').selectAll("line")
+      .data(data.links)
+      // .enter().append("svg:path")
+      .attr('class', 'link')
+      .attr("data-target", function(o) { return o.target })
+      .attr("data-source", function(o) { return o.source })
+      .attr("marker-end", function(d) { return "url(#regular)"; })
+      .exit()
+      .remove();
+
+    // Nodes
+    nodes = graph.append('svg:g').selectAll("node")
+      .data(data.nodes)
+      // .enter().append("svg:g")
+      .attr("class","node")
+      .call(layout.drag)
+      .on("mousedown", onNodeMouseDown);
+
+      nodes
+        .exit()
+        .remove();
+
+      // Circles
+      nodes.attr("class", function(d) { return formatClassName('node', d) })
+      nodes.append("svg:circle")
+        .attr("class", function(d) { return formatClassName('circle', d) })
+        .attr("r", 6)
+        .on("mouseover", onNodeMouseOver.bind(this, nodes, links) )
+        .on("mouseout", onNodeMouseOut.bind(this, nodes, links) );
+
+
+      // A copy of the text with a thick white stroke for legibility.
+      nodes.append("svg:text")
+          .attr("x", 15)
+          .attr("y", ".31em")
+          .attr("class", function(d) { return 'shadow ' + formatClassName('text', d) })
+          .text(function(d) { return d.id.replace(window.basePath, '') });
+
+      nodes.append("svg:text")
+          .attr("class", function(d) { return formatClassName('text', d) })
+          .attr("x", 15)
+          .attr("y", ".31em")
+          .text(function(d) { return d.id.replace(window.basePath, '') });
+
+    // Build linked index
+    data.links.forEach(function(d) {
+      linkedByIndex[d.source.index + "," + d.target.index] = 1;
+    });
+
+    data.links.forEach(function(link, index, list) {
+        if (typeof data.nodes[link.source] === 'undefined') {
+            console.log('undefined source', link);
+        }
+        if (typeof data.nodes[link.target] === 'undefined') {
+            console.log('undefined target', link);
+        }
+    });
+
+    // Draw the
+    layout.nodes(data.nodes);
+    layout.links(data.links);
+    layout.on("tick", onTick);
+    layout.start();
+
+    zoom.scale(0.4);
+
+    // Render transition
+    graph.transition()
+      .duration(500)
+      .attr("transform", "scale(" + zoom.scale() + ")");
+
+  }
+
+  function onNodeMouseOver(nodes, links, d) {
+
+    // Highlight circle
+    var elm = findElementByNode('circle', d);
+    elm.style("fill", '#b94431');
+
+    // Highlight related nodes
+    fadeRelatedNodes(d, .05, nodes, links);
+  }
+
+  function onNodeMouseOut(nodes, links, d) {
+
+    // Highlight circle
+    var elm = findElementByNode('circle', d);
+    elm.style("fill", '#ccc');
+
+    // Highlight related nodes
+    fadeRelatedNodes(d, 1, nodes, links);
+    debouncedPersist();
+  }
+
+  function onTick(e) {
+
+    links.attr("d", function(d) {
+      var dx = d.target.x - d.source.x,
+          dy = d.target.y - d.source.y,
+          dr = Math.sqrt(dx * dx + dy * dy);
+      return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+    });
+
+    nodes.attr("cx", function(d) { return d.x; })
+         .attr("cy", function(d) { return d.y; })
+         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+  }
+
+  function onControlZoomClicked(e) {
+    var elmTarget = $(this)
+    var scaleProcentile = 0.20;
+
+    // Scale
+    var currentScale = zoom.scale();
+    var newScale;
+    if(elmTarget.hasClass('control-zoom-in')) {
+      newScale = currentScale * (1 + scaleProcentile);
+    } else {
+      newScale = currentScale * (1 - scaleProcentile);
+    }
+    newScale = Math.max(newScale, 0);
+
+    // Translate
+    var centerTranslate = [
+      (graphWidth / 2) - (graphWidth * newScale / 2),
+      (graphHeight / 2) - (graphHeight * newScale / 2)
+    ];
+
+    // Store values
+    zoom
+      .translate(centerTranslate)
+      .scale(newScale);
+
+    // Render transition
+    graph.transition()
+      .duration(500)
+      .attr("transform", "translate(" + zoom.translate() + ")" + " scale(" + zoom.scale() + ")");
+
+  }
+
+  function onZoomChanged() {
+    graph.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
+  }
+
+  function persistNodes(nodes) {
+    var store = nodes.filter(function(n){ return n.fixed }).reduce(function(mem,n){
+      mem[n.id]=n;
+      return mem;
+    },{});
+    store = JSON.stringify(store);
+    window.localStorage.setItem("dependo"+window.graphIdentification, store);
+  }
+
+  function getNodes() {
+    try {
+      if(window.nodePositions){
+        return JSON.parse(window.nodePositions);
+      }else{
+        return JSON.parse(window.localStorage.getItem("dependo"+window.graphIdentification)) || {};
+      }
+    } catch (e) {
+      return {};
+    }
+  }
+
+
+  function onNodeMouseDown(d) {
+     d.fixed = true;
+     d3.select(this).classed("sticky", true);
+     debouncedPersist();
+  }
+
+  var persistTimer;
+  function debouncedPersist() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(function(){
+      persistNodes(data.nodes)
+    },1000);
+  }
+
+  render();
+
+  d3.select('#filter').on('change', () => {
+    var graphData = prepareRendering();
+    updateGraph(graphData);
+  });
+
+})();
+
+    </script>
+
+</body>
+
+</html>
